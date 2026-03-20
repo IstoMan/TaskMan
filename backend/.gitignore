@@ -1,0 +1,4 @@
+.env
+tmp/
+go.sum
+test.db*
