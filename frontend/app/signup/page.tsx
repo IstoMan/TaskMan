@@ -1,24 +1,38 @@
 import { Button } from "@/components/ui/button";
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-export default function LoginPage() {
+export default function SignUp() {
+  return (
+    <main className="grid min-h-screen place-items-center bg-zinc-50 dark:bg-zinc-950 px">
+      <div className="w-full max-w-sm mx-auto">
+        <Form />
+      </div>
+    </main>
+  )
+}
+
+
+function Form() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Sign Up</h1>
         <p className="text-sm text-muted-foreground font-medium">
-          Enter your email and password to login
+          Enter your name, email and password to sign up
         </p>
       </div>
 
       <form action="#" className="space-y-4">
         <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="name">Name</FieldLabel>
+            <Input id="name" placeholder="Your Name" required />
+          </Field>
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
@@ -42,5 +56,5 @@ export default function LoginPage() {
         </FieldGroup>
       </form>
     </div>
-  );
+  )
 }
