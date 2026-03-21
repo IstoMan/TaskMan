@@ -21,11 +21,14 @@ func main() {
 	serverPort := os.Getenv("PORT")
 
 	router := gin.Default()
-	router.GET("/health", services.CheckHealth)
-	router.POST("/users", services.CreateUser)
-	router.POST("/users/login", services.LoginUser)
+	router.Use(services.CORSMiddleware())
 
-	taskRoutes := router.Group("/tasks")
+	mainRoutes := router.Group("/api")
+	mainRoutes.GET("/health", services.CheckHealth)
+	mainRoutes.POST("/users", services.CreateUser)
+	mainRoutes.POST("/users/login", services.LoginUser)
+
+	taskRoutes := mainRoutes.Group("/tasks")
 	taskRoutes.Use(services.AuthMiddleware, services.AdminMiddleware)
 	{
 		taskRoutes.POST("", services.CreateTask)
