@@ -29,7 +29,7 @@ export default function SignupPage() {
     setError(message);
   };
 
-  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     const formData = new FormData(e.currentTarget);
@@ -72,7 +72,7 @@ export default function SignupPage() {
         </CardDescription>
         <CardAction>
           <Button variant="link" asChild>
-            <Link href="/auth/login">Log in</Link>
+            <Link href="/login">Log in</Link>
           </Button>
         </CardAction>
       </CardHeader>
