@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,31 +20,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UserRole } from "@/lib/users";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [role, setRole] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const failWithError = (message: string) => {
+    setError(message);
+  };
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData) as Record<string, string>;
     if (!data.role) {
-      throw new Error("Please select a role");
+      failWithError("Please select a role");
+      return;
     }
-    console.log(data);
-    const response = await fetch("/api/users", {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    if (!response.ok) {
-      const errBody = (await response.json()) as { error?: string; message?: string };
-      const msg = errBody.error ?? errBody.message ?? response.statusText;
-      console.error(errBody);
-      throw new Error(msg);
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        const errBody = (await response.json()) as { error?: string; message?: string };
+        const msg = errBody.error ?? errBody.message ?? response.statusText;
+        failWithError(msg);
+        return;
+      }
+      await response.json();
+      router.push("/dashboard");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      failWithError(msg);
+    } finally {
+      setIsLoading(false);
     }
-    const result = await response.json();
-    console.log(result);
   };
 
   return (
@@ -60,11 +77,20 @@ export default function SignupPage() {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <form id="signup-form" onSubmit={handleSignup}>
+        <form
+          id="signup-form"
+          onSubmit={handleSignup}
+          aria-busy={isLoading}
+        >
+          {error ? (
+            <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
           <div className="flex flex-col gap-6">
             <div className="grid gap-2">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" name="name" placeholder="Your name" required />
+              <Input id="name" name="name" placeholder="Your name" required disabled={isLoading} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -74,6 +100,7 @@ export default function SignupPage() {
                 type="email"
                 placeholder="your@email.com"
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -84,12 +111,17 @@ export default function SignupPage() {
                 type="password"
                 placeholder="········"
                 required
+                disabled={isLoading}
               />
             </div>
             <input type="hidden" name="role" value={role} />
             <div className="grid gap-2">
               <Label htmlFor="role">Role</Label>
-              <Select value={role || undefined} onValueChange={setRole}>
+              <Select
+                value={role}
+                onValueChange={setRole}
+                disabled={isLoading}
+              >
                 <SelectTrigger id="role" className="w-full">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
@@ -103,11 +135,21 @@ export default function SignupPage() {
         </form>
       </CardContent>
       <CardFooter className="flex-col gap-2">
-        <Button type="submit" form="signup-form" className="w-full gap-2">
-          <UserPlus />
-          Sign up
+        <Button
+          type="submit"
+          form="signup-form"
+          variant={error ? "destructive" : "default"}
+          className="w-full gap-2"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="animate-spin" aria-hidden />
+          ) : (
+            <UserPlus aria-hidden />
+          )}
+          {isLoading ? "Creating account…" : "Sign up"}
         </Button>
-        <Button type="button" variant="outline" className="w-full">
+        <Button type="button" variant="outline" className="w-full" disabled={isLoading}>
           Sign up with Google
         </Button>
       </CardFooter>

@@ -1,0 +1,15 @@
+---
+description: Use Bun for all package management and script execution in this project
+alwaysApply: true
+---
+
+# Bun tooling
+
+This project uses **Bun** as the package manager and runtime for Node/Next work.
+
+- Prefer **`bun`** over `npm`, `pnpm`, or `yarn` for installing dependencies (e.g. `bun install`).
+- Prefer **`bun run <script>`** over `npm run` for package.json scripts (e.g. `bun run dev`, `bun run build`, `bun run lint`).
+- Prefer **`bunx <command>`** over `npx` to run one-off CLI tools from dependencies (e.g. `bunx eslint .`).
+- Do not suggest or document commands that assume `npm`/`npx`/`pnpm`/`yarn` unless the user explicitly asks for a comparison.
+
+When reading docs or examples that show `npm install` or `npx`, translate them to the Bun equivalents above.
