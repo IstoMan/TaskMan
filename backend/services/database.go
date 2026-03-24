@@ -20,6 +20,11 @@ func InitDB() {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
+	err = models.DB.AutoMigrate(&models.Project{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
 	err = models.DB.AutoMigrate(&models.Task{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)

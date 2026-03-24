@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   FolderKanban,
   LayoutDashboard,
@@ -16,8 +17,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getCurrentUser, logout } from "@/lib/api";
+import type { CurrentUser } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { currentUser } from "@/lib/mock-data";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -38,6 +40,19 @@ function getInitials(name: string): string {
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+      } catch {
+        setCurrentUser(null);
+      }
+    };
+    void loadUser();
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-sm">
@@ -88,15 +103,15 @@ export function Navbar() {
             >
               <Avatar size="lg" className="shrink-0">
                 <AvatarFallback className="text-sm">
-                  {getInitials(currentUser.name)}
+                  {getInitials(currentUser?.name ?? "Guest")}
                 </AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 max-w-[10rem] flex-1 flex-col items-start sm:max-w-none">
                 <span className="block w-full truncate text-xs font-medium leading-tight">
-                  {currentUser.name}
+                  {currentUser?.name ?? "Guest"}
                 </span>
                 <span className="block w-full truncate text-[11px] leading-tight text-muted-foreground">
-                  {currentUser.email}
+                  {currentUser?.email ?? "Not signed in"}
                 </span>
               </div>
             </DropdownMenuTrigger>
@@ -110,7 +125,12 @@ export function Navbar() {
               <DropdownMenuItem
                 variant="destructive"
                 className="gap-1.5 py-1 pl-2 pr-2 text-xs [&_svg]:size-3.5"
-                onSelect={() => {
+                onSelect={async () => {
+                  try {
+                    await logout();
+                  } catch {
+                    // Navigate to login even if backend logout fails.
+                  }
                   router.push("/login");
                 }}
               >

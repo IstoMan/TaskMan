@@ -6,7 +6,7 @@ import {
   Loader,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import type { DashboardStats } from "@/lib/mock-data";
+import type { DashboardStats } from "@/lib/types";
 
 type StatItem = {
   label: string;

@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Project } from "@/lib/mock-data";
+import type { Project } from "@/lib/types";
 
 export function ProjectsSection({ projects }: { projects: Project[] }) {
   return (
@@ -33,7 +33,7 @@ export function ProjectsSection({ projects }: { projects: Project[] }) {
                 <div
                   className="h-full rounded-full bg-primary transition-all"
                   style={{
-                    width: `${Math.min(100, Math.round(Math.random() * 80 + 10))}%`,
+                    width: `${Math.min(100, Math.max(8, project.taskCount * 10))}%`,
                   }}
                 />
               </div>

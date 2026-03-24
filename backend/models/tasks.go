@@ -10,13 +10,16 @@ import (
 type Status string
 
 const (
-	PENDING   Status = "pending"
-	COMPLETED Status = "completed"
+	TODO       Status = "todo"
+	INPROGRESS Status = "in-progress"
+	DONE       Status = "done"
+	PENDING    Status = "pending"
+	COMPLETED  Status = "completed"
 )
 
 func (s Status) Valid() bool {
 	switch s {
-	case PENDING, COMPLETED:
+	case TODO, INPROGRESS, DONE, PENDING, COMPLETED:
 		return true
 	}
 	return false
@@ -24,13 +27,15 @@ func (s Status) Valid() bool {
 
 type Task struct {
 	gorm.Model
-	TaskID         uuid.UUID `gorm:"primaryKey;uniqueIndex"`
-	TaskTitle      string    `json:"task_title"`
-	TaskDesc       string    `json:"task_desc"`
-	UserID         uuid.UUID `json:"user_id"`
-	AssignedMember User      `json:"assigned_member" gorm:"foreignKey:UserID;references:UserID"`
-	Deadline       time.Time `json:"deadline"`
-	Progress       Status    `json:"progress"`
+	TaskID         uuid.UUID  `gorm:"primaryKey;uniqueIndex"`
+	TaskTitle      string     `json:"task_title"`
+	TaskDesc       string     `json:"task_desc"`
+	ProjectID      *uuid.UUID `json:"project_id"`
+	Project        *Project   `json:"project" gorm:"foreignKey:ProjectID;references:ProjectID"`
+	UserID         *uuid.UUID `json:"user_id"`
+	AssignedMember *User      `json:"assigned_member" gorm:"foreignKey:UserID;references:UserID"`
+	Deadline       *time.Time `json:"deadline"`
+	Progress       Status     `json:"progress"`
 }
 
 type AssignRequest struct {

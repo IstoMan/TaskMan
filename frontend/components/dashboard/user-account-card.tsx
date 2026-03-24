@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import type { CurrentUser } from "@/lib/mock-data";
+import type { CurrentUser } from "@/lib/types";
 
 function getInitials(name: string): string {
   return name

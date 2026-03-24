@@ -92,3 +92,64 @@ func LoginUser(c *gin.Context) {
 		"message": "Login Successful",
 	})
 }
+
+func ListUsers(c *gin.Context) {
+	var users []models.User
+	if err := models.DB.Order("created_at DESC").Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't fetch users"})
+		return
+	}
+
+	response := make([]gin.H, 0, len(users))
+	for _, user := range users {
+		response = append(response, gin.H{
+			"id":    user.UserID,
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"users": response})
+}
+
+func GetCurrentUser(c *gin.Context) {
+	userIDRaw, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing user in auth context"})
+		return
+	}
+
+	userIDString, ok := userIDRaw.(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid auth user"})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDString)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid auth user"})
+		return
+	}
+
+	var user models.User
+	if err := models.DB.Where("user_id = ?", userID).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user": gin.H{
+			"id":    user.UserID,
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+		},
+	})
+}
+
+func LogoutUser(c *gin.Context) {
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("Authorization", "", -1, "/", "", false, true)
+	c.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
+}

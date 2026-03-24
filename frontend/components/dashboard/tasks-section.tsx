@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Task, TaskStatus } from "@/lib/mock-data";
+import type { Task, TaskStatus } from "@/lib/types";
 
 const statusVariant: Record<TaskStatus, "default" | "secondary" | "outline"> = {
   done: "default",
