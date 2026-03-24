@@ -251,7 +251,12 @@ export function TasksPageContent() {
                       <Button
                         type="button"
                         size="sm"
-                        variant={task.status === "done" ? "default" : "outline"}
+                        variant={task.status === "done" ? "default" : "secondary"}
+                        className={
+                          task.status === "done"
+                            ? ""
+                            : "bg-amber-100 text-amber-900 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-200 dark:hover:bg-amber-500/30"
+                        }
                         onClick={() => toggleDone(task)}
                       >
                         {task.status === "done" ? (
@@ -284,12 +289,6 @@ export function TasksPageContent() {
                       <p className="text-sm text-foreground">
                         {formatDeadline(task.deadline)}
                       </p>
-                    </div>
-                    <div className="space-y-1">
-                      <CardDescription>Status</CardDescription>
-                      <Badge variant={task.status === "done" ? "default" : "secondary"}>
-                        {task.status}
-                      </Badge>
                     </div>
                   </div>
                 </CardContent>
