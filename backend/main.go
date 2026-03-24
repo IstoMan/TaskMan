@@ -32,6 +32,7 @@ func main() {
 	authRoutes.Use(services.AuthMiddleware)
 	{
 		authRoutes.GET("/users/me", services.GetCurrentUser)
+		authRoutes.GET("/members", services.ListMembers)
 		authRoutes.POST("/users/logout", services.LogoutUser)
 		authRoutes.GET("/dashboard", services.GetDashboard)
 		authRoutes.GET("/projects", services.ListProjects)
@@ -43,6 +44,7 @@ func main() {
 	adminRoutes.Use(services.AuthMiddleware, services.AdminMiddleware)
 	{
 		adminRoutes.GET("/users", services.ListUsers)
+		adminRoutes.PATCH("/members/:id/title", services.UpdateMemberTitle)
 
 		adminRoutes.POST("/tasks", services.CreateTask)
 		adminRoutes.DELETE("/tasks/:id", services.RemoveTask)

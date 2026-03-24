@@ -40,12 +40,30 @@ export type CurrentUser = {
   name: string;
   email: string;
   role: "admin" | "member";
+  memberTitle: MemberTitle;
 };
 
 export type TaskMember = {
   id: string;
   name: string;
   avatarFallback: string;
+};
+
+export type MemberTitle =
+  | ""
+  | "Designer"
+  | "Project Manager"
+  | "Engineer"
+  | "QA Engineer"
+  | "Product Manager"
+  | "DevOps Engineer";
+
+export type Member = {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "member";
+  memberTitle: MemberTitle;
 };
 
 export type DashboardPayload = {

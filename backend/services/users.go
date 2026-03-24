@@ -4,6 +4,7 @@ package services
 import (
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,40 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"istoman.backend.task.com/models"
 )
+
+var allowedMemberTitles = []string{
+	"Designer",
+	"Project Manager",
+	"Engineer",
+	"QA Engineer",
+	"Product Manager",
+	"DevOps Engineer",
+}
+
+func isAllowedMemberTitle(raw string) bool {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return true
+	}
+
+	for _, candidate := range allowedMemberTitles {
+		if candidate == trimmed {
+			return true
+		}
+	}
+
+	return false
+}
+
+func mapUser(user models.User) gin.H {
+	return gin.H{
+		"id":           user.UserID,
+		"name":         user.Name,
+		"email":        user.Email,
+		"role":         user.Role,
+		"member_title": user.MemberTitle,
+	}
+}
 
 func CreateUser(c *gin.Context) {
 	var newUser models.User
@@ -22,6 +57,12 @@ func CreateUser(c *gin.Context) {
 
 	if !newUser.Role.Valid() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Member can either be member or admin"})
+		return
+	}
+
+	newUser.MemberTitle = strings.TrimSpace(newUser.MemberTitle)
+	if !isAllowedMemberTitle(newUser.MemberTitle) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid member title"})
 		return
 	}
 
@@ -41,11 +82,12 @@ func CreateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"id":         newUser.UserID,
-		"name":       newUser.Name,
-		"role":       newUser.Role,
-		"email":      newUser.Email,
-		"created_at": newUser.CreatedAt,
+		"id":           newUser.UserID,
+		"name":         newUser.Name,
+		"role":         newUser.Role,
+		"member_title": newUser.MemberTitle,
+		"email":        newUser.Email,
+		"created_at":   newUser.CreatedAt,
 	})
 }
 
@@ -102,15 +144,84 @@ func ListUsers(c *gin.Context) {
 
 	response := make([]gin.H, 0, len(users))
 	for _, user := range users {
-		response = append(response, gin.H{
-			"id":    user.UserID,
-			"name":  user.Name,
-			"email": user.Email,
-			"role":  user.Role,
-		})
+		response = append(response, mapUser(user))
 	}
 
 	c.JSON(http.StatusOK, gin.H{"users": response})
+}
+
+func ListMembers(c *gin.Context) {
+	query := models.DB.Model(&models.User{}).Order("created_at DESC")
+
+	role, _ := c.Get("role")
+	if role == "admin" {
+		memberTitle := strings.TrimSpace(c.Query("member_title"))
+		if memberTitle != "" {
+			if !isAllowedMemberTitle(memberTitle) {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid member_title"})
+				return
+			}
+			query = query.Where("member_title = ?", memberTitle)
+		}
+	}
+
+	var users []models.User
+	if err := query.Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't fetch members"})
+		return
+	}
+
+	response := make([]gin.H, 0, len(users))
+	for _, user := range users {
+		response = append(response, mapUser(user))
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"users":          response,
+		"allowed_titles": allowedMemberTitles,
+	})
+}
+
+func UpdateMemberTitle(c *gin.Context) {
+	userIDRaw := strings.TrimSpace(c.Param("id"))
+	if userIDRaw == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing user id"})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDRaw)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user id"})
+		return
+	}
+
+	var payload struct {
+		MemberTitle string `json:"member_title"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	payload.MemberTitle = strings.TrimSpace(payload.MemberTitle)
+	if !isAllowedMemberTitle(payload.MemberTitle) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid member title"})
+		return
+	}
+
+	var user models.User
+	if err := models.DB.Where("user_id = ?", userID).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	user.MemberTitle = payload.MemberTitle
+	if err := models.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't update member title"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user": mapUser(user)})
 }
 
 func GetCurrentUser(c *gin.Context) {
@@ -139,12 +250,7 @@ func GetCurrentUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user": gin.H{
-			"id":    user.UserID,
-			"name":  user.Name,
-			"email": user.Email,
-			"role":  user.Role,
-		},
+		"user": mapUser(user),
 	})
 }
 

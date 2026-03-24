@@ -2,6 +2,8 @@ import type {
   CurrentUser,
   DashboardPayload,
   DashboardStats,
+  Member,
+  MemberTitle,
   Project,
   ProjectTask,
   Task,
@@ -38,6 +40,7 @@ type RawUser = {
   name: string;
   email: string;
   role: "admin" | "member";
+  member_title: string;
 };
 
 type RawDashboard = {
@@ -111,6 +114,30 @@ function toProjectTask(raw: RawTask): ProjectTask {
     status: mapStatus(raw.status),
     project: raw.project,
     assignee: raw.assignee,
+  };
+}
+
+function mapMemberTitle(raw: string): MemberTitle {
+  switch (raw) {
+    case "Designer":
+    case "Project Manager":
+    case "Engineer":
+    case "QA Engineer":
+    case "Product Manager":
+    case "DevOps Engineer":
+      return raw;
+    default:
+      return "";
+  }
+}
+
+function toMember(raw: RawUser): Member {
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    role: raw.role,
+    memberTitle: mapMemberTitle(raw.member_title),
   };
 }
 
@@ -265,7 +292,29 @@ export async function getTaskMembers(): Promise<TaskMember[]> {
 
 export async function getCurrentUser(): Promise<CurrentUser> {
   const payload = await apiRequest<{ user: RawUser }>("/users/me");
-  return payload.user;
+  return toMember(payload.user);
+}
+
+export async function getMembers(memberTitle?: MemberTitle): Promise<Member[]> {
+  const search = memberTitle
+    ? `?member_title=${encodeURIComponent(memberTitle)}`
+    : "";
+  const payload = await apiRequest<{ users: RawUser[] }>(`/members${search}`);
+  return payload.users.map(toMember);
+}
+
+export async function updateMemberTitle(
+  memberId: string,
+  memberTitle: MemberTitle
+): Promise<Member> {
+  const payload = await apiRequest<{ user: RawUser }>(
+    `/members/${memberId}/title`,
+    {
+      method: "PATCH",
+      body: { member_title: memberTitle },
+    }
+  );
+  return toMember(payload.user);
 }
 
 export async function logout(): Promise<void> {

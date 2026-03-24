@@ -15,11 +15,12 @@ const (
 
 type User struct {
 	gorm.Model
-	UserID   uuid.UUID `gorm:"primaryKey;uniqueIndex"`
-	Name     string    `json:"name"`
-	Email    string    `json:"email" gorm:"unique"`
-	Role     UserRole  `json:"role"`
-	Password string    `json:"password"`
+	UserID      uuid.UUID `gorm:"primaryKey;uniqueIndex"`
+	Name        string    `json:"name"`
+	Email       string    `json:"email" gorm:"unique"`
+	Role        UserRole  `json:"role"`
+	MemberTitle string    `json:"member_title"`
+	Password    string    `json:"password"`
 }
 
 func (s UserRole) Valid() bool {
