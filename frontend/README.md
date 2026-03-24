@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend Documentation
 
-## Getting Started
+Next.js 16 frontend for Taskmanager.
 
-First, run the development server:
+- Framework: Next.js (App Router)
+- Runtime/tooling: Bun
+- UI: React 19 + shadcn/ui components
+
+## Requirements
+
+- Bun `1.x`
+- Running backend API (default `http://localhost:9090`)
+
+## Run Locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd frontend
+cp .env.example .env
+bun install
+bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App URL: `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### `BACKEND_URL`
 
-## Learn More
+Backend base URL used in two places:
 
-To learn more about Next.js, take a look at the following resources:
+1. `next.config.ts` rewrite of `/api/:path*` -> `${BACKEND_URL}/api/:path*`
+2. Server components (`app/page.tsx`, `app/dashboard/layout.tsx`) for auth checks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Default when unset: `http://localhost:9090`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Example `.env`:
 
-## Deploy on Vercel
+```env
+BACKEND_URL=http://localhost:9090
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts (Bun)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `bun run dev` - start development server
+- `bun run build` - production build
+- `bun run start` - run production server
+- `bun run lint` - ESLint checks
+
+## Authentication Flow
+
+- Signup/login pages call `/api/users` and `/api/users/login`.
+- Next rewrite proxies those to backend `/api/...`.
+- Backend sets HTTP-only `Authorization` cookie.
+- Protected pages read cookie server-side and call `/api/users/me`.
+- Missing/invalid auth redirects user to `/login`.
+
+## Route Overview
+
+- `/login` - login form
+- `/signup` - account creation
+- `/dashboard` - authenticated dashboard
+- `/dashboard/projects` - projects management
+- `/dashboard/tasks` - tasks management
+- `/dashboard/members` - members management
+
+Legacy redirects are handled:
+
+- `/auth/login` -> `/login`
+- `/auth/signup` -> `/signup`
+
+## API Usage in Frontend
+
+Main API client: `lib/api.ts`
+
+- uses `fetch("/api...")`
+- always sends credentials (`credentials: "include"`)
+- normalizes backend status values (`pending/completed` to `todo/done`)
+
+Primary methods include:
+
+- `getDashboard`, `getProjects`, `createProject`, `updateProject`, `deleteProject`
+- `getTasks`, `createTask`, `updateTask`
+- `getMembers`, `updateMemberTitle`
+- `getCurrentUser`, `logout`
+
+## Docker
+
+The container:
+
+- builds with `oven/bun:1`
+- runs with `oven/bun:1-slim`
+- exposes port `10000`
+
+Build/run:
+
+```bash
+cd frontend
+docker build -t taskmanager-frontend .
+docker run --rm -p 10000:10000 \
+  -e PORT=10000 \
+  -e BACKEND_URL=http://host.docker.internal:9090 \
+  taskmanager-frontend
+```
+
+## Additional Docs
+
+- `../README.md` (repo-level quickstart)
+- `docs/ARCHITECTURE.md` (frontend internals)
