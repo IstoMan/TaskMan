@@ -1,0 +1,7 @@
+.git
+.gitignore
+.env
+test.db
+tmp
+bin
+*.log

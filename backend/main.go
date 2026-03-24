@@ -11,14 +11,19 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Couldn't Load .env error: %v", err)
+	if err := godotenv.Load(); err != nil {
+		log.Printf("No .env file loaded, relying on environment variables: %v", err)
 	}
 
 	services.InitDB()
 
 	serverPort := os.Getenv("PORT")
+	if serverPort == "" {
+		serverPort = "8080"
+	}
+	if serverPort[0] != ':' {
+		serverPort = ":" + serverPort
+	}
 
 	router := gin.Default()
 	router.Use(services.CORSMiddleware())
@@ -54,7 +59,6 @@ func main() {
 		adminRoutes.DELETE("/projects/:id", services.RemoveProject)
 	}
 
-	fmt.Printf("Server Listening on localhost%s\n", serverPort)
-
-	log.Fatal(router.Run("localhost" + serverPort))
+	fmt.Printf("Server listening on 0.0.0.0%s\n", serverPort)
+	log.Fatal(router.Run("0.0.0.0" + serverPort))
 }
