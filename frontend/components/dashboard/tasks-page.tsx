@@ -306,7 +306,7 @@ export function TasksPageContent() {
         <div>
           <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
             <SelectTrigger
-              className="h-auto w-fit border-0 bg-transparent p-0 text-2xl font-bold tracking-tight shadow-none hover:bg-transparent focus-visible:ring-0 dark:bg-transparent dark:hover:bg-transparent [&_[data-slot=select-value]]:text-2xl [&_[data-slot=select-value]]:font-bold [&_[data-slot=select-value]]:tracking-tight"
+              className="h-auto w-fit border-0 bg-transparent p-0 text-xl font-semibold tracking-normal shadow-none hover:bg-transparent focus-visible:ring-0 dark:bg-transparent dark:hover:bg-transparent [&_[data-slot=select-value]]:text-xl [&_[data-slot=select-value]]:font-semibold [&_[data-slot=select-value]]:tracking-normal"
             >
               <SelectValue placeholder="Project Tasks">
                 {selectedProject?.name}
@@ -329,7 +329,7 @@ export function TasksPageContent() {
                     {index > 0 ? <SelectSeparator className="my-0" /> : null}
                     <SelectItem
                       value={project.id}
-                      className="rounded-none py-3 pr-3 pl-3 text-2xl font-bold tracking-tight focus:rounded-none"
+                      className="rounded-none py-2.5 pr-3 pl-3 text-base font-medium tracking-normal focus:rounded-none"
                       textValue={project.name}
                     >
                       {project.name}
