@@ -11,8 +11,10 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Printf("No .env file loaded, relying on environment variables: %v", err)
+	if _, err := os.Stat(".env"); err == nil {
+		if err := godotenv.Load(); err != nil {
+			log.Printf("failed to load .env: %v", err)
+		}
 	}
 
 	services.InitDB()
