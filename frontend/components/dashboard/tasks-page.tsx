@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays, Circle, CircleCheckBig, Plus } from "lucide-react";
 import {
   createTask,
   getProjects,
@@ -10,7 +10,9 @@ import {
   updateTask as updateTaskRequest,
 } from "@/lib/api";
 import type { Project, ProjectTask, TaskMember } from "@/lib/types";
+import { useUser } from "@/lib/user-context";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -83,6 +85,9 @@ function formatDeadline(value: string) {
 }
 
 export function TasksPageContent() {
+  const user = useUser();
+  const isAdmin = user.role === "admin";
+
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [taskMembers, setTaskMembers] = useState<TaskMember[]>([]);
@@ -112,6 +117,21 @@ export function TasksPageContent() {
   };
 
   useEffect(() => {
+    if (!isAdmin) {
+      const loadMemberTasks = async () => {
+        try {
+          const loadedTasks = await getTasks();
+          setTasks(loadedTasks);
+        } catch (err) {
+          const message =
+            err instanceof Error ? err.message : "Failed to load your tasks";
+          setError(message);
+        }
+      };
+      void loadMemberTasks();
+      return;
+    }
+
     const loadInitialData = async () => {
       try {
         const [loadedProjects, loadedMembers] = await Promise.all([
@@ -129,10 +149,10 @@ export function TasksPageContent() {
     };
 
     void loadInitialData();
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
-    if (!selectedProjectId) {
+    if (!isAdmin || !selectedProjectId) {
       return;
     }
 
@@ -148,7 +168,7 @@ export function TasksPageContent() {
     };
 
     void loadTasks();
-  }, [selectedProjectId]);
+  }, [isAdmin, selectedProjectId]);
 
   const persistTask = async (taskId: string, patch: Parameters<typeof updateTaskRequest>[1]) => {
     try {
@@ -187,6 +207,99 @@ export function TasksPageContent() {
       setError(message);
     }
   };
+
+  const toggleDone = (task: ProjectTask) => {
+    const nextStatus = task.status === "done" ? "todo" : "done";
+    updateTaskLocal(task.id, { status: nextStatus });
+    void persistTask(task.id, { status: nextStatus });
+  };
+
+  if (!isAdmin) {
+    return (
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <header>
+          <h1 className="text-2xl font-bold tracking-tight">My Tasks</h1>
+          <p className="text-sm text-muted-foreground">
+            Tasks assigned to you across all projects.
+          </p>
+          {error ? (
+            <p className="mt-2 text-sm text-destructive">{error}</p>
+          ) : null}
+        </header>
+
+        <section className="grid gap-4">
+          {visibleTasks.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                No tasks assigned to you yet.
+              </CardContent>
+            </Card>
+          ) : (
+            visibleTasks.map((task) => (
+              <Card key={task.id} className={task.status === "done" ? "opacity-60" : ""}>
+                <CardHeader className="gap-3 border-b">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className={task.status === "done" ? "line-through" : ""}>
+                        {task.title}
+                      </CardTitle>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      {task.project ? (
+                        <Badge variant="secondary">{task.project}</Badge>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={task.status === "done" ? "default" : "outline"}
+                        onClick={() => toggleDone(task)}
+                      >
+                        {task.status === "done" ? (
+                          <>
+                            <CircleCheckBig className="size-4" />
+                            Done
+                          </>
+                        ) : (
+                          <>
+                            <Circle className="size-4" />
+                            Mark done
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4 pt-4">
+                  <div className="space-y-1">
+                    <CardDescription>Description</CardDescription>
+                    <p className="text-sm text-foreground">
+                      {task.description || "No description."}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <CardDescription>Deadline</CardDescription>
+                      <p className="text-sm text-foreground">
+                        {formatDeadline(task.deadline)}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <CardDescription>Status</CardDescription>
+                      <Badge variant={task.status === "done" ? "default" : "secondary"}>
+                        {task.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">

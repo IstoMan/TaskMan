@@ -167,6 +167,35 @@ export async function getProjects(): Promise<Project[]> {
   return payload.projects.map(toProject);
 }
 
+export async function createProject(input: {
+  name: string;
+  description: string;
+}): Promise<Project> {
+  const payload = await apiRequest<{ project: RawProject }>("/projects", {
+    method: "POST",
+    body: input,
+  });
+  return toProject(payload.project);
+}
+
+export async function updateProject(
+  projectId: string,
+  patch: { name?: string; description?: string }
+): Promise<Project> {
+  const payload = await apiRequest<{ project: RawProject }>(
+    `/projects/${projectId}`,
+    {
+      method: "PATCH",
+      body: patch,
+    }
+  );
+  return toProject(payload.project);
+}
+
+export async function deleteProject(projectId: string): Promise<void> {
+  await apiRequest(`/projects/${projectId}`, { method: "DELETE" });
+}
+
 export async function createTask(input: {
   title: string;
   description: string;

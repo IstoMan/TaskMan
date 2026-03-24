@@ -192,6 +192,17 @@ func ListTasks(c *gin.Context) {
 		Preload("Project").
 		Order("created_at DESC")
 
+	role, _ := c.Get("role")
+	if role == "member" {
+		userID, _ := c.Get("user_id")
+		parsedUID, err := uuid.Parse(userID.(string))
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid auth user"})
+			return
+		}
+		query = query.Where("user_id = ?", parsedUID)
+	}
+
 	projectID := c.Query("project_id")
 	if strings.TrimSpace(projectID) != "" {
 		parsedProjectID, err := uuid.Parse(projectID)
@@ -330,10 +341,40 @@ func UpdateTask(c *gin.Context) {
 		return
 	}
 
+	role, _ := c.Get("role")
+	isMember := role == "member"
+
+	if isMember {
+		userIDRaw, _ := c.Get("user_id")
+		parsedUID, err := uuid.Parse(userIDRaw.(string))
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid auth user"})
+			return
+		}
+
+		var existing models.Task
+		if err := models.DB.Where("task_id = ?", TaskID).First(&existing).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
+			return
+		}
+		if existing.UserID == nil || *existing.UserID != parsedUID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You can only update tasks assigned to you"})
+			return
+		}
+	}
+
 	var patch taskPatchRequest
 	if err := c.ShouldBindJSON(&patch); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
+	}
+
+	if isMember {
+		if patch.Status == nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Members can only update task status"})
+			return
+		}
+		patch = taskPatchRequest{Status: patch.Status}
 	}
 
 	updates := map[string]any{}

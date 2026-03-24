@@ -33,25 +33,23 @@ func main() {
 	{
 		authRoutes.GET("/users/me", services.GetCurrentUser)
 		authRoutes.POST("/users/logout", services.LogoutUser)
+		authRoutes.GET("/dashboard", services.GetDashboard)
+		authRoutes.GET("/projects", services.ListProjects)
+		authRoutes.GET("/tasks", services.ListTasks)
+		authRoutes.PATCH("/tasks/:id", services.UpdateTask)
 	}
 
 	adminRoutes := mainRoutes.Group("")
 	adminRoutes.Use(services.AuthMiddleware, services.AdminMiddleware)
 	{
 		adminRoutes.GET("/users", services.ListUsers)
-		adminRoutes.GET("/dashboard", services.GetDashboard)
 
-		taskRoutes := adminRoutes.Group("/tasks")
-		taskRoutes.GET("", services.ListTasks)
-		taskRoutes.POST("", services.CreateTask)
-		taskRoutes.PATCH("/:id", services.UpdateTask)
-		taskRoutes.DELETE("/:id", services.RemoveTask)
+		adminRoutes.POST("/tasks", services.CreateTask)
+		adminRoutes.DELETE("/tasks/:id", services.RemoveTask)
 
-		projectRoutes := adminRoutes.Group("/projects")
-		projectRoutes.GET("", services.ListProjects)
-		projectRoutes.POST("", services.CreateProject)
-		projectRoutes.PATCH("/:id", services.UpdateProject)
-		projectRoutes.DELETE("/:id", services.RemoveProject)
+		adminRoutes.POST("/projects", services.CreateProject)
+		adminRoutes.PATCH("/projects/:id", services.UpdateProject)
+		adminRoutes.DELETE("/projects/:id", services.RemoveProject)
 	}
 
 	fmt.Printf("Server Listening on localhost%s\n", serverPort)
