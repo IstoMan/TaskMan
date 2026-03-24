@@ -20,19 +20,35 @@ type projectPatchRequest struct {
 }
 
 type projectResponse struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	TaskCount   int64  `json:"task_count"`
+	ID                 string `json:"id"`
+	Name               string `json:"name"`
+	Description        string `json:"description"`
+	TaskCount          int64  `json:"task_count"`
+	CompletedTaskCount int64  `json:"completed_task_count"`
 }
 
-func mapProject(project models.Project, taskCount int64) projectResponse {
+func mapProject(project models.Project, taskCount int64, completedTaskCount int64) projectResponse {
 	return projectResponse{
-		ID:          project.ProjectID.String(),
-		Name:        project.Name,
-		Description: project.Description,
-		TaskCount:   taskCount,
+		ID:                 project.ProjectID.String(),
+		Name:               project.Name,
+		Description:        project.Description,
+		TaskCount:          taskCount,
+		CompletedTaskCount: completedTaskCount,
 	}
+}
+
+func getProjectTaskCounts(projectID uuid.UUID) (int64, int64, error) {
+	var taskCount int64
+	if err := models.DB.Model(&models.Task{}).Where("project_id = ?", projectID).Count(&taskCount).Error; err != nil {
+		return 0, 0, err
+	}
+
+	var completedTaskCount int64
+	if err := models.DB.Model(&models.Task{}).Where("project_id = ? AND progress IN ?", projectID, []models.Status{models.DONE, models.COMPLETED}).Count(&completedTaskCount).Error; err != nil {
+		return 0, 0, err
+	}
+
+	return taskCount, completedTaskCount, nil
 }
 
 func ListProjects(c *gin.Context) {
@@ -44,12 +60,12 @@ func ListProjects(c *gin.Context) {
 
 	response := make([]projectResponse, 0, len(projects))
 	for _, project := range projects {
-		var taskCount int64
-		if err := models.DB.Model(&models.Task{}).Where("project_id = ?", project.ProjectID).Count(&taskCount).Error; err != nil {
+		taskCount, completedTaskCount, err := getProjectTaskCounts(project.ProjectID)
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't compute project task counts"})
 			return
 		}
-		response = append(response, mapProject(project, taskCount))
+		response = append(response, mapProject(project, taskCount, completedTaskCount))
 	}
 
 	c.JSON(http.StatusOK, gin.H{"projects": response})
@@ -79,7 +95,7 @@ func CreateProject(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"project": mapProject(project, 0)})
+	c.JSON(http.StatusCreated, gin.H{"project": mapProject(project, 0, 0)})
 }
 
 func UpdateProject(c *gin.Context) {
@@ -130,13 +146,13 @@ func UpdateProject(c *gin.Context) {
 		return
 	}
 
-	var taskCount int64
-	if err := models.DB.Model(&models.Task{}).Where("project_id = ?", project.ProjectID).Count(&taskCount).Error; err != nil {
+	taskCount, completedTaskCount, err := getProjectTaskCounts(project.ProjectID)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't compute project task count"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"project": mapProject(project, taskCount)})
+	c.JSON(http.StatusOK, gin.H{"project": mapProject(project, taskCount, completedTaskCount)})
 }
 
 func RemoveProject(c *gin.Context) {

@@ -23,6 +23,17 @@ import { Input } from "@/components/ui/input";
 
 type EditableField = "name" | "description";
 
+function getCompletionPercent(project: Project): number {
+  if (project.taskCount <= 0) {
+    return 0;
+  }
+
+  return Math.min(
+    100,
+    Math.max(0, (project.completedTaskCount / project.taskCount) * 100)
+  );
+}
+
 export function ProjectsPageContent() {
   const user = useUser();
   const isAdmin = user.role === "admin";
@@ -240,7 +251,7 @@ export function ProjectsPageContent() {
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <Badge variant="secondary">
-                        {project.taskCount} tasks
+                        {project.completedTaskCount}/{project.taskCount} completed
                       </Badge>
                       {isAdmin ? (
                         <Button
@@ -300,7 +311,7 @@ export function ProjectsPageContent() {
                     <div
                       className="h-full rounded-full bg-primary transition-all"
                       style={{
-                        width: `${Math.min(100, Math.max(8, project.taskCount * 10))}%`,
+                        width: `${getCompletionPercent(project)}%`,
                       }}
                     />
                   </div>

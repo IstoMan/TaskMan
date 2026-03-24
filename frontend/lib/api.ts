@@ -33,6 +33,7 @@ type RawProject = {
   name: string;
   description: string;
   task_count: number;
+  completed_task_count: number;
 };
 
 type RawUser = {
@@ -90,6 +91,7 @@ function toProject(raw: RawProject): Project {
     name: raw.name,
     description: raw.description,
     taskCount: raw.task_count,
+    completedTaskCount: raw.completed_task_count,
   };
 }
 

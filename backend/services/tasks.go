@@ -52,10 +52,11 @@ type dashboardStatsResponse struct {
 }
 
 type dashboardProjectResponse struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	TaskCount   int64  `json:"task_count"`
+	ID                 string `json:"id"`
+	Name               string `json:"name"`
+	Description        string `json:"description"`
+	TaskCount          int64  `json:"task_count"`
+	CompletedTaskCount int64  `json:"completed_task_count"`
 }
 
 type dashboardResponse struct {
@@ -503,11 +504,18 @@ func GetDashboard(c *gin.Context) {
 			return
 		}
 
+		var projectCompletedTaskCount int64
+		if err := models.DB.Model(&models.Task{}).Where("project_id = ? AND progress IN ?", project.ProjectID, []models.Status{models.DONE, models.COMPLETED}).Count(&projectCompletedTaskCount).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't compute project task counts"})
+			return
+		}
+
 		projectSummaries = append(projectSummaries, dashboardProjectResponse{
-			ID:          project.ProjectID.String(),
-			Name:        project.Name,
-			Description: project.Description,
-			TaskCount:   projectTaskCount,
+			ID:                 project.ProjectID.String(),
+			Name:               project.Name,
+			Description:        project.Description,
+			TaskCount:          projectTaskCount,
+			CompletedTaskCount: projectCompletedTaskCount,
 		})
 	}
 

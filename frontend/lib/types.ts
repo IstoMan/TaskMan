@@ -11,6 +11,7 @@ export type Project = {
   name: string;
   description: string;
   taskCount: number;
+  completedTaskCount: number;
 };
 
 export type TaskStatus = "done" | "in-progress" | "todo";
