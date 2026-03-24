@@ -23,33 +23,35 @@ export function TasksSection({ tasks }: { tasks: Task[] }) {
   return (
     <section className="space-y-4">
       <h2 className="text-lg font-semibold tracking-tight">Recent Tasks</h2>
-      <Card>
-        <CardHeader className="border-b">
-          <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 text-xs font-medium text-muted-foreground">
+      <Card className="gap-0 py-0">
+        <CardHeader className="rounded-none border-b px-6 py-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_6rem_7rem_5rem] items-center gap-4 text-xs font-medium text-muted-foreground">
             <CardTitle className="text-xs font-medium text-muted-foreground">
               Task
             </CardTitle>
-            <span className="w-24 text-center">Status</span>
-            <span className="w-28 text-center">Project</span>
-            <span className="w-20 text-center">Assignee</span>
+            <span className="flex h-6 items-center justify-center text-center">Status</span>
+            <span className="flex h-6 items-center justify-center text-center">Project</span>
+            <span className="flex h-6 items-center justify-center text-center">Assignee</span>
           </div>
         </CardHeader>
         <CardContent className="divide-y p-0">
           {tasks.map((task) => (
             <div
               key={task.id}
-              className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-4 py-3 text-sm"
+              className="grid h-12 grid-cols-[minmax(0,1fr)_6rem_7rem_5rem] items-center gap-4 px-6 text-sm"
             >
-              <span className="truncate font-medium">{task.title}</span>
-              <span className="flex w-24 justify-center">
+              <span className="truncate font-medium leading-5">
+                {task.title}
+              </span>
+              <span className="flex items-center justify-center">
                 <Badge variant={statusVariant[task.status]}>
                   {statusLabel[task.status]}
                 </Badge>
               </span>
-              <span className="w-28 truncate text-center text-muted-foreground">
+              <span className="flex w-full items-center justify-center truncate text-center text-muted-foreground leading-5">
                 {task.project}
               </span>
-              <span className="w-20 truncate text-center text-muted-foreground">
+              <span className="flex w-full items-center justify-center truncate text-center text-muted-foreground leading-5">
                 {task.assignee}
               </span>
             </div>
