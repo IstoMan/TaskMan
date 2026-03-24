@@ -149,9 +149,6 @@ export default function SignupPage() {
           )}
           {isLoading ? "Creating account…" : "Sign up"}
         </Button>
-        <Button type="button" variant="outline" className="w-full" disabled={isLoading}>
-          Sign up with Google
-        </Button>
       </CardFooter>
     </Card>
   );
